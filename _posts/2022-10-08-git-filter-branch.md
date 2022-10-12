@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - 특정 파일 히스토리 전부 삭제하기[Filter-Branch]
-tag: [Thymeleaf]
+title: [Git] 특정 파일 히스토리 전부 삭제하기 - Filter-Branch
+tag: [Git]
 ---
 
 프로젝트를 진행 중에 이제 이 프로젝트를 내 깃에 업로드하고 포트폴리오로써 활용하여야 겠다는 생각을 갖게 되었다.  

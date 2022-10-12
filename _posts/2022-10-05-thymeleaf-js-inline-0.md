@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Thymeleaf - 자바스크립트 인라인
+title: [Thymeleaf] 자바스크립트 인라인
 tag: [Thymeleaf]
 ---
 ### 자바스크립트 인라인이란?
