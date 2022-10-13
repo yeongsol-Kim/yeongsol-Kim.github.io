@@ -47,7 +47,7 @@ public interface GiLogRepository extends JpaRepository<GiLog, Long> {
     
     ...
 ```
-이제 리포지토리에서 List<GiLog> 목록이 제대로 불러와지는지 테스트 코드를 작성 해보겠다.
+이제 리포지토리에서 giLogList가 제대로 불러와지는지 테스트 코드를 작성 해보겠다.
 
 ### 테스트 코드 작성
 테스트 코드 작성을 위해 리포지토리와 스토어(저장소)를 새로 만들어야하나 했지만  
@@ -71,8 +71,7 @@ class GiLogServiceTest {
 
     @Autowired
     GiLogRepository giLogRepository;
-
-
+    
     @Test
     void getMyGiLogList() {
 
