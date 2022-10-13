@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 특정 파일 히스토리 전부 삭제하기 - Filter-Branch
+title: Git - 특정 파일 히스토리 전부 삭제하기 [Filter-Branch]
 tag: [Git]
 ---
 

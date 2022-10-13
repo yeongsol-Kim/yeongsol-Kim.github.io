@@ -114,5 +114,5 @@ class GiLogServiceTest {
 ApplicationCotextError없이 정상적으로 실행 되고 테스트 또한 모두 성공하였다!  
   
 이로써 스프링 데이터 JPA를 사용하는 테스트코드를 작성 해보았다.  
-앞서 말했듯 테스트코드를 작성하는 습관을 정~말 열심히 들여야겠다.
+앞서 말했듯 테스트코드를 작성하는 습관을 정~말 열심히 들여야겠다.  
 또 다음에 applicationContextError도 제대로 해결해보아야겠다!
