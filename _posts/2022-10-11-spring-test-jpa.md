@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data JPA - 테스트 케이스 작성
-tag: 
+tag: [Spring][Jpa]
 ---
 
 진행 중이던 외주 프로젝트에 새로 API를 추가할 일이 생겼다.  
