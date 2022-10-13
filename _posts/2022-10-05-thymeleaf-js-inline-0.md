@@ -1,7 +1,7 @@
 ---
 layout: post
-title: [Thymeleaf] 자바스크립트 인라인
-tag: [Thymeleaf]
+title: 자바스크립트 인라인
+tag: 
 ---
 ### 자바스크립트 인라인이란?
 타임리프에서 가져온 변수 또는 값을 자바스크립트에서 사용할 수 있게 하는 것이다
