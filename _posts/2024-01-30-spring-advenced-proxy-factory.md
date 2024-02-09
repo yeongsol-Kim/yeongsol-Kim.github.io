@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Spring 고급편 - Proxy factory
-tag: [Spring, JPA]
+tag: [Spring, Proxy]
 ---
 
 
@@ -21,13 +21,13 @@ Advice라는 새로운 개념을 도입하여 InvocationHandler나 MethodInterce
 
 
 ### 사용법
-테스트 코드를 통해 사용법을 알아보겠다.
-다음은 타겟 클래스의 실행시간을 측정하는 프록시이다. 
+테스트 코드를 통해 사용법을 알아보겠다.  
+다음은 타겟 클래스의 실행시간을 측정하는 어드바이스다. 
 
-#### TestAdvice.class
+#### TimeAdvice.class
 ```java
 @Slf4j
-public class TestAdvice implements MethodInterceptor {
+public class TimeAdvice implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         
@@ -47,90 +47,56 @@ public class TestAdvice implements MethodInterceptor {
     } 
 }
 ```
-MethodInterceptor를 상속받아 invoke 메소드를 구현하면 된다.
+Advice는 MethodInterceotor를 상속받아 구현한다.(패키지 이름에 주의)
+어드바이스를 구현할 때 타겟 클래스를 따로 지정해주지 않는다. 타겟 클래스 정보는 MethodInvocation에 지정되어있기 떄문이다.
 
-#### Service
+#### ProxyFactoryTest
 ```java
     ...
 
-    // 기록 목록 가져오기 (로그인 유저)
-    public List<GiLogDto> getMyGiLogList(Long userId) {
-        List<GiLog> giLogList = giLogRepository.findByUserId(userId);
-    
-        // 리스트 DTO 변환
-        List<GiLogDto> giLogDtoList = gilogListToDto(giLogList);
-    
-        return giLogDtoList;
+    @Slf4j
+    public class ProxyFactoryTest {
+        @Test
+        @DisplayName("인터페이스가 있으면 JDK 동적 프록시 사용")
+        void interfaceProxy() {
+            // 인터페이스가 있는 클래스
+            ServiceInterface target = new ServiceImpl();
+            ProxyFactory proxyFactory = new ProxyFactory(target);
+            proxyFactory.addAdvice(new TimeAdvice());
+
+            ServiceInterface proxy = (ServiceInterface) proxyFactory.getProxy();
+            
+            log.info("targetClass={}", target.getClass());
+            log.info("proxyClass={}", proxy.getClass());
+            proxy.save();
+
+            // 인터페이스가 있는 클래스기 떄문에 프록시 팩초리가 자동으로 Jdk 동적 프록시방식 사용
+            assertThat(AopUtils.isAopProxy(proxy)).isTrue();
+            assertThat(AopUtils.isJdkDynamicProxy(proxy)).isTrue(); 
+            assertThat(AopUtils.isCglibProxy(proxy)).isFalse();
+        }
+
+        @Test
+        @DisplayName("구체 클래스만 있으면 CGLIB 사용") void concreteProxy() {
+            // 구체클래스만 있는 클래스
+            ConcreteService target = new ConcreteService();
+            ProxyFactory proxyFactory = new ProxyFactory(target);
+            proxyFactory.addAdvice(new TimeAdvice());
+            
+            ConcreteService proxy = (ConcreteService) proxyFactory.getProxy();
+            
+            log.info("targetClass={}", target.getClass());
+            log.info("proxyClass={}", proxy.getClass());
+            proxy.call();
+            
+            // 구체클래스만 있기 떄문에 프록시 팩토리가 자동으로 CGLIB 사용
+            assertThat(AopUtils.isAopProxy(proxy)).isTrue();
+            assertThat(AopUtils.isJdkDynamicProxy(proxy)).isFalse();
+            assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
+        }
     }
     
     ...
 ```
-이제 리포지토리에서 giLogList가 제대로 불러와지는지 테스트 코드를 작성 해보겠다.
-
-### 테스트 코드 작성
-테스트 코드 작성을 위해 리포지토리와 스토어(저장소)를 새로 만들어야하나 했지만  
-Data Jpa를 손쉽게 테스트 할 수 있게 해주는 @DataJpaTest 어노테이션이 있음을 알게 되었다!  
-@DataJpaTest는 JPA관련 빈들만 로드해 @SpringBootTest보다 빠르고 @Transactional을 포함하고 있다.
-또 무려 내장형 DB를 가지고 있어 @Entity가 붙은 클래스들을 읽어 스프링 데이터 JPA 저장소를 자동으로 구성해준다는 개쩌는 능력을 갖고있다!!...만  
-무슨 이유에서인지 계속해서 ApplicationContextError가 발생하였다 ㅠㅠㅠ,,  
-나는 이 오류가 DB 저장소를 구축하는데서 발생하는 거라고 추측하고 이것저것 시도를 해보았지만 결국 실제 DB를 사용하는 방법 이외에는 알아내지 못했다,,    
-내장형 DB를 꼭 써보고 싶었지만 일단은 테스트가 우선이니 나중에 다시 꼭 시도 해보아야겠다!  
-  
-내장형 db를 사용하지 않고 실제 db를 사용하는 방법은 다음과 같다.
-1. @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 추가 또는
-2. application.yml파일에 test.database.replace: none 추가  
-
-나는 1번 방법을 채택하였다.
-#### ServiceTest
-```java
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class GiLogServiceTest {
-
-    @Autowired
-    GiLogRepository giLogRepository;
-    
-    @Test
-    void getMyGiLogList() {
-
-        // 더미데이터 저장 (given)
-        GiLog giLog1 = new GiLog();
-        giLog1.setQuestion("question1?");
-        giLog1.setRequest("request1");
-        giLog1.setUserId(1L);
-        giLog1.setWriteDate(LocalDate.parse("2022-10-01"));
-
-        GiLog giLog2 = new GiLog();
-        giLog2.setQuestion("question2?");
-        giLog2.setRequest("request2");
-        giLog2.setUserId(1L);
-        giLog2.setWriteDate(LocalDate.parse("2022-10-02"));
-
-        GiLog giLog3 = new GiLog();
-        giLog3.setQuestion("question3?");
-        giLog3.setRequest("request3");
-        giLog3.setUserId(2L);
-        giLog3.setWriteDate(LocalDate.parse("2022-10-01"));
-
-        giLogRepository.save(giLog1);
-        giLogRepository.save(giLog2);
-        giLogRepository.save(giLog3);
-        
-
-        // 메소드 실행 (when)
-        List<GiLog> giLogList = giLogRepository.findByUserId(1L);
-
-        
-        // 확인 (then)
-        Assertions.assertThat(giLogList).contains(giLog1);
-        Assertions.assertThat(giLogList).contains(giLog2);
-        Assertions.assertThat(giLogList).doesNotContain(giLog3);
-        
-    }
-}
-```
-ApplicationCotextError없이 정상적으로 실행 되고 테스트 또한 모두 성공하였다!  
-  
-이로써 스프링 데이터 JPA를 사용하는 테스트코드를 작성 해보았다.  
-앞서 말했듯 테스트코드를 작성하는 습관을 정~말 열심히 들여야겠다.  
-또 다음에 applicationContextError도 제대로 해결해보아야겠다!
+ProxyFactory를 생성하면서 target클래스를 지정해준 후 addAdvice 메소드를 이용해 Advice를 지정해준다. Advice는 여러개 지정 가능하다.  
+그 후에 getProxy를 이용하여 프록시를 가져오고 call메소드를 실행하면 된다.
