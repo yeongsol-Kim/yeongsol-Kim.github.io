@@ -20,20 +20,34 @@ Advice라는 새로운 개념을 도입하여 InvocationHandler나 MethodInterce
 #### 로직 Client -> 프록시팩토리 -> JDK 동적 프록시 or CGLIB -> Advice -> Target
 
 
-### 개발
-개발 사항은 다음과 같다.
-- 사용자의 로그인 정보를 이용해 사용자가 작성한 글 목록을 반환하는 API
+### 사용법
+테스트 코드를 통해 사용법을 알아보겠다.
+다음은 타겟 클래스의 실행시간을 측정하는 프록시이다. 
 
-#### Repository
+#### TestAdvice.class
 ```java
-@Repository
-public interface GiLogRepository extends JpaRepository<GiLog, Long> {
-    ...
-    List<GiLog> findByUserId(Long userid);
-    ...
+@Slf4j
+public class TestAdvice implements MethodInterceptor {
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        
+        // 시간 측정 시작
+        log.info("timeProxy 실행");
+        long startTime = System.currentTimeMillis();
+        
+        // 타겟 클래스 실행
+        Object result = invocation.proceed();
+        
+        //시간 측정 종료
+        long endTime = System.currentTimeMillis();
+        long resultTime = endTime - startTime;
+        log.info("TimeProxy 종료 resultTime={}ms", resultTime);
+        
+        return result;
+    } 
 }
 ```
-데이터 JPA를 사용 중이기 때문에 다음과 같이 한 줄만 추가하였다
+MethodInterceptor를 상속받아 invoke 메소드를 구현하면 된다.
 
 #### Service
 ```java
